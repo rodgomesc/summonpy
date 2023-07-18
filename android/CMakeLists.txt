@@ -30,6 +30,15 @@ include_directories(
             ${PYTHON_INCLUDE_DIR}
 )
 
+# Configure C++ 17
+set_target_properties(
+        pyjsi PROPERTIES
+        CXX_STANDARD 17
+        CXX_EXTENSIONS OFF
+        POSITION_INDEPENDENT_CODE ON
+)
+
+
 find_package(ReactAndroid REQUIRED CONFIG)
 
 

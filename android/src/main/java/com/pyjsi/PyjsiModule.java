@@ -1,5 +1,6 @@
 package com.pyjsi;
 
+import android.app.Activity;
 import android.util.Log;
 import com.pyjsi.bridge.*;
 import androidx.annotation.NonNull;
@@ -71,18 +72,26 @@ public class PyJsiModule extends ReactContextBaseJavaModule {
     JavaScriptContextHolder jsContext = getReactApplicationContext().getJavaScriptContextHolder();
     // Extract python files from assets
     AssetExtractor assetExtractor = new AssetExtractor(getReactApplicationContext());
-    assetExtractor.removeAssets("python");
-    assetExtractor.copyAssets("python");
 
-    // Get the extracted assets directory
-    String pythonPath = assetExtractor.getAssetsDataDir() + "python";
+    Activity currentActivity = getCurrentActivity();
+    if(currentActivity == null) {
+      Log.e(NAME, "Current activity is null. Can't install the Python interpreter");
+      return false;
+    }
 
-    // Start the Python interpreter
-//    PyJsiModule.start(pythonPath);
+    String path = "python";
+
+    String assetsPath = currentActivity.getApplicationInfo().dataDir + "/assets/"+ path;
+    String cachePath = currentActivity.getCacheDir().getPath();
+    String jniPath = currentActivity.getApplicationInfo().nativeLibraryDir;
+
+    assetExtractor.removeAssets(path);
+    assetExtractor.copyAssets(path);
+
     try {
       Log.i(NAME, "Loading pyjsi C++ library...");
       System.loadLibrary("pyjsi");
-      nativeInstall(jsContext.get(), pythonPath);
+      nativeInstall(jsContext.get(), assetsPath, cachePath, jniPath);
       Log.i(NAME, "Successfully installed pyjsi JSI Bindings!");
       return true;
     } catch (Exception exception) {
@@ -91,5 +100,6 @@ public class PyJsiModule extends ReactContextBaseJavaModule {
     }
   }
 
-  private static native void nativeInstall(long jsiPtr, String pythonPath);
+
+  private static native void nativeInstall(long jsiPtr, String assetsPath, String cachePath, String jniPath);
 }

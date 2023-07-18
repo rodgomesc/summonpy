@@ -70,3 +70,5 @@ android/keystores/debug.keystore
 lib/
 
 pyjsi-venv/
+
+jniLibs/**/*

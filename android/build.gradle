@@ -102,6 +102,8 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
+
+
 }
 
 repositories {
@@ -115,6 +117,8 @@ dependencies {
   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
   //noinspection GradleDynamicVersion
   implementation 'com.facebook.react:react-android:+'
+  // simple jtar lib for extracting assets
+  api 'org.kamranzafar:jtar:2.3'
 }
 
 if (isNewArchitectureEnabled()) {
@@ -124,3 +128,26 @@ if (isNewArchitectureEnabled()) {
     codegenJavaPackageName = "com.pyjsi"
   }
 }
+
+
+task copyNativeLibs(type: Copy) {
+  from("../externals") {
+    include "**/lib/lib.*.so"
+  }
+
+  into file("src/main/jniLibs")
+  includeEmptyDirs = false
+
+  eachFile { fileDetails ->
+    def pathSplit = fileDetails.path.split("/")
+    def targetDir = pathSplit[pathSplit.length - 3] // this should be the directory name (arch type)
+    fileDetails.path = "$targetDir/" + fileDetails.name
+  }
+
+  doLast {
+    println("Copied native libraries to jniLibs directory.")
+  }
+}
+
+
+preBuild.dependsOn copyNativeLibs

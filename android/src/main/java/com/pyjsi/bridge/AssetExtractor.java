@@ -8,6 +8,17 @@
  */
 
 package com.pyjsi.bridge;
+/**
+ * Utilities for extracting assets from an APK file.
+ *
+ * From https://github.com/joaoventura/pybridge
+ *
+ * It assumes that the assets are going to be extracted and manipulated
+ * in the application data dir. By default, the extracted assets will be
+ * located in the '<dataDir>/assets/' folder.
+ *
+ */
+
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -15,18 +26,28 @@ import android.content.res.AssetManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import org.kamranzafar.jtar.TarEntry;
+import org.kamranzafar.jtar.TarInputStream;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 
 public class AssetExtractor {
 
-  private final static String LOGTAG = "AssetExtractor";
+  private final static String TAG = "AssetExtractor";
+  private final static int BUFFER = 8192;
   private Context mContext;
   private AssetManager mAssetManager;
 
@@ -40,22 +61,22 @@ public class AssetExtractor {
    *
    * @param version: int
    */
-  public void setAssetsVersion(int version) {
+  public void setAssetsVersion(long version) {
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     SharedPreferences.Editor editor = preferences.edit();
 
-    editor.putInt("assetsVersion", version);
+    editor.putLong("installTime", version);
     editor.apply();
   }
 
   /**
    * Returns the version for the extracted assets.
    *
-   * @return int
+   * @return long
    */
-  public int getAssetsVersion() {
+  public long getAssetsVersion() {
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-    return preferences.getInt("assetsVersion", 0);
+    return preferences.getLong("installTime", 0);
   }
 
   /**
@@ -103,7 +124,7 @@ public class AssetExtractor {
    */
   private void copyAssetFile(String src, String dst) {
     File file = new File(dst);
-    Log.i(LOGTAG, String.format("Copying %s -> %s", src, dst));
+    Log.i(TAG, String.format("Copying %s -> %s", src, dst));
 
     try {
       File dir = file.getParentFile();
@@ -135,6 +156,111 @@ public class AssetExtractor {
   public void copyAssets(String path) {
     for (String asset : listAssets(path)) {
       copyAssetFile(asset, getAssetsDataDir() + asset);
+      if (asset.endsWith(".zip")) {
+        unzipAsset(getAssetsDataDir() + asset);
+      } else if (asset.endsWith(".tar.gz") || asset.endsWith(".tar") || asset.endsWith(".tgz")) {
+        // Android pulls off the gz for whatever reason
+        unpackAsset(getAssetsDataDir()+asset);
+      }
+    }
+  }
+
+  /**
+   * Decompresses an asset and removes the source
+   *
+   * @param asset: the path within the assets folder
+   */
+  public void unzipAsset(String asset) {
+    try {
+      long start = System.currentTimeMillis();
+      // Extract zip
+      Log.d(TAG, "Extracting: " +asset);
+      String extractDir = (new File(asset)).getParent();
+      BufferedOutputStream dest = null;
+      BufferedInputStream is = null;
+      ZipEntry entry;
+      ZipFile zipfile = new ZipFile(asset);
+      Enumeration e = zipfile.entries();
+      while(e.hasMoreElements()) {
+        entry = (ZipEntry) e.nextElement();
+
+
+        File destFile = new File(extractDir, entry.getName());
+        File destinationParent = destFile.getParentFile();
+        //If entry is directory create sub directory on file system
+        destinationParent.mkdirs();
+
+        if (!entry.isDirectory()) {
+          //Log.d(TAG, "Extracting: " +entry);
+          is = new BufferedInputStream(zipfile.getInputStream(entry));
+          int count;
+          byte data[] = new byte[BUFFER];
+          FileOutputStream fos = new FileOutputStream(destFile.getAbsolutePath());
+
+          dest = new BufferedOutputStream(fos, BUFFER);
+          while ((count = is.read(data, 0, BUFFER)) != -1) {
+            dest.write(data, 0, count);
+          }
+          dest.flush();
+          dest.close();
+          is.close();
+        }
+      }
+
+      // Remove source zip
+      (new File(asset)).delete();
+      Log.i(TAG,"Unpacking took "+(System.currentTimeMillis()-start)+" ms");
+
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Unpack a tar asset (540ms)
+   * @param asset
+   */
+  public void unpackAsset(String asset) {
+    try {
+      long start = System.currentTimeMillis();
+      Log.d(TAG, "Extracting: " +asset);
+      //LZ4Factory factory = LZ4Factory.fastestInstance();
+      //LZ4FastDecompressor decompressor = factory.fastDecompressor();
+      File tarFile = new File(asset);
+      //String extractDir = mContext.getCacheDir().getPath();
+      String extractDir = (tarFile).getParent();
+      // Create a TarInputStream
+      TarInputStream tis = new TarInputStream(new FileInputStream(tarFile));
+      TarEntry entry;
+
+      while((entry = tis.getNextEntry()) != null) {
+        File destFile = new File(extractDir, entry.getName().substring(2));
+        File destinationParent = destFile.getParentFile();
+        //If entry is directory create sub directory on file system
+        destinationParent.mkdirs();
+
+        if (!entry.isDirectory()) {
+          //Log.i(TAG,"Extracting: "+ entry.getName() +" to "+destFile.getAbsolutePath());
+          int count = 0;
+          byte data[] = new byte[BUFFER];
+          FileOutputStream fos = new FileOutputStream(destFile);
+          BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
+          while((count = tis.read(data)) != -1) {
+            dest.write(data, 0, count);
+          }
+          dest.flush();
+          dest.close();
+        }
+      }
+      tis.close();
+
+      // Remove source file
+      (new File(asset)).delete();
+
+      Log.i(TAG,"Unpacking took "+(System.currentTimeMillis()-start)+" ms");
+
+    } catch(Exception e) {
+      e.printStackTrace();
     }
   }
 
@@ -149,7 +275,7 @@ public class AssetExtractor {
         recursiveDelete(f);
     }
 
-    Log.i(LOGTAG, "Removing " + file.getAbsolutePath());
+    //Log.i(TAG, "Removing " + file.getAbsolutePath());
     file.delete();
   }
 
