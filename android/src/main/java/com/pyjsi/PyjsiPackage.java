@@ -11,12 +11,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PyjsiPackage implements ReactPackage {
+
+public class PyJsiPackage implements ReactPackage {
   @NonNull
   @Override
   public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
     List<NativeModule> modules = new ArrayList<>();
-    modules.add(new PyjsiModule(reactContext));
+    modules.add(new PyJsiModule(reactContext));
     return modules;
   }
 

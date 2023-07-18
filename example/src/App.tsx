@@ -1,19 +1,22 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-pyjsi';
+import { StyleSheet, View } from 'react-native';
+// import { multiply } from 'react-native-pyjsi';
+import { NativeModules } from 'react-native';
+
+const PyJsi = NativeModules.PyJsiModule;
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-
+  // const [result, setResult] = React.useState<number | undefined>();
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    console.log({ PyJsi });
+    if (PyJsi?.install) {
+      PyJsi.install();
+    }
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
-    </View>
+    <View style={styles.container}>{/* <Text>Result: {result}</Text> */}</View>
   );
 }
 
