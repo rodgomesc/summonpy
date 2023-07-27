@@ -29,3 +29,29 @@ MIT
 ---
 
 Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+
+
+
+# create local mamba env
+
+paste this environment.yml
+
+```yml
+# Name
+name: pyjsi-env
+
+# Channels to look for any specific libraries
+channels:
+  - local
+
+# App dependencies to be installed
+dependencies:
+  - python=3.10
+  - pip
+  - android-python * py310*
+  - android-pybind
+```
+then create the env with envi
+```sh
+mamba env create -f environment.yml
+```
