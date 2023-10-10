@@ -90,6 +90,7 @@ public class PyJsiModule extends ReactContextBaseJavaModule {
 
     try {
       Log.i(NAME, "Loading pyjsi C++ library...");
+      System.loadLibrary("python3.10");
       System.loadLibrary("pyjsi");
       nativeInstall(jsContext.get(), assetsPath, cachePath, jniPath);
       Log.i(NAME, "Successfully installed pyjsi JSI Bindings!");

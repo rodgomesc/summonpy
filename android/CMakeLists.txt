@@ -20,8 +20,12 @@ set_target_properties(crypt PROPERTIES IMPORTED_LOCATION ${LIB_CRYPT})
 
 add_library(pyjsi
             SHARED
+            ../cpp/Logger.cpp
+            ../cpp/Logger.h
+            ../cpp/py-ext-register.cpp
             ../cpp/react-native-pyjsi.cpp
-            cpp-adapter.cpp
+            ./cpp-adapter.cpp
+
 )
 
 # Specifies a path to native header files.

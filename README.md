@@ -31,6 +31,17 @@ MIT
 Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
 
 
+# Android Setup
+To ensure that native libraries are extracted in installation time, add the following line in your AndroidManifest.xml:
+
+  ```xml
+  <application
+    ...
+    android:extractNativeLibs="true">
+    ...
+  </application>
+```
+
 
 # create local mamba env
 
@@ -55,3 +66,9 @@ then create the env with envi
 ```sh
 mamba env create -f environment.yml
 ```
+
+
+## ARCHITECTURE FLOW
+
+- create python extension
+- inject python extension to hook custom import locations
