@@ -119,7 +119,7 @@ Java_com_pyjsi_PyJsiModule_nativeInstall(JNIEnv *env, jclass clazz, jlong jsi_pt
   setenv("PY_LIB_DIR", jnipath, 1);
 
   char* lib_dir = getenv("PY_LIB_DIR");
-  
+
   PyExtension myExtension(lib_dir);
   PyImport_AppendInittab("hello", PyInit_hello);
   Py_Initialize();
