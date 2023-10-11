@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/react-native/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@summonpy/react-native-mage": ["../react-native-mage/src"],
+    },
+    "preserveSymlinks": true,
+    "moduleSuffixes": [".ios", ".native", ""],
+    "jsx": "react-native",
+    "noImplicitAny": false,
+    "strict": false,
+    "strictNullChecks": false
+  }
+}
+
+

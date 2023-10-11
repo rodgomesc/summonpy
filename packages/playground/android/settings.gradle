@@ -1,0 +1,9 @@
+rootProject.name = 'PyjsiExample'
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
+
+
+// fix a android studio issue when using pnpm workspaces that
+// prevent resolving symlinked node_modules in settings.gradle
+// https://github.com/facebook/react-native/issues/34432
+includeBuild(file('../node_modules/@react-native/gradle-plugin').toPath().toRealPath().toAbsolutePath().toString())
